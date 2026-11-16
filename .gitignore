@@ -1,0 +1,39 @@
+
+# Secretos y variables de entorno
+.env
+.env.*
+!.env.example
+!.env.template
+*credentials*
+*secrets*
+
+# Dependencias instaladas
+node_modules/
+.opencode/node_modules/
+
+# Artefactos comprimidos duplicados (los documentos fuente ya estan versionados)
+docs/research/fase1/00-plan-investigacion.zip
+
+# Volcados de base de datos: pueden contener datos de `auth` (correos, hashes) y nunca se versionan
+workspace/backups/
+
+# Archivos temporales y registros
+*.log
+*.tmp
+*.temp
+*.bak
+*.old
+
+# Resultados de compilación y pruebas
+dist/
+build/
+coverage/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Configuración y estado local de OpenCode
+.opencode/.local/
+/git
+.vercel
+.env*
