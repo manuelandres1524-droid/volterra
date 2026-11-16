@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Activar MFA · VOLTERRA{% endblock %}
+
+{% block content %}
+<section class="auth-card" aria-labelledby="mfa-title">
+  <h1 id="mfa-title">Activar autenticación de dos factores</h1>
+  <p class="muted">Escanea el código QR con tu aplicación de autenticación (Google Authenticator, Authy, etc.).</p>
+
+  {% if error %}
+  <div class="alert alert-error" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <div class="stack" style="align-items: center;">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ uri | urlencode }}"
+         alt="Código QR para MFA" width="200" height="200">
+
+    <p class="muted small">O ingresa manualmente: <code>{{ secret }}</code></p>
+  </div>
+
+  <form method="post" action="/mfa/verify" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="factor_id" value="{{ factor_id }}">
+
+    <label for="code">Código de verificación</label>
+    <input id="code" name="code" type="text" inputmode="numeric" pattern="[0-9]{6}"
+           autocomplete="one-time-code" required autofocus placeholder="000000">
+
+    <button type="submit" class="button">Verificar y activar</button>
+  </form>
+
+  <p class="muted small">
+    <a href="/mfa/factors">Ver factores inscritos</a> · <a href="/me">Volver</a>
+  </p>
+</section>
+{% endblock %}

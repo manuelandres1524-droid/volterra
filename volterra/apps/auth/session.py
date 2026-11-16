@@ -215,3 +215,207 @@ async def revoke_session(access_token: str) -> None:
             await client.post(f"{base}/auth/v1/logout", headers=headers)
     except httpx.HTTPError:
         return
+
+
+# ─── MFA (TOTP) ────────────────────────────────────────────────────────────────
+
+async def enroll_mfa(access_token: str, friendly_name: str = "VOLTERRA") -> dict:
+    """Inicia la inscripción de un factor TOTP. Devuelve el secreto y la URI QR."""
+    base = settings.SUPABASE_URL.rstrip("/")
+    if not base or not settings.SUPABASE_PUBLISHABLE_KEY or not access_token:
+        raise UnavailableError("El servicio de autenticación no está configurado.")
+    headers = {
+        "apikey": settings.SUPABASE_PUBLISHABLE_KEY,
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=settings.SUPABASE_AUTH_TIMEOUT_SECONDS) as client:
+            response = await client.post(
+                f"{base}/auth/v1/factors",
+                json={"factor_type": "totp", "friendly_name": friendly_name},
+                headers=headers,
+            )
+    except httpx.HTTPError as exc:
+        raise UnavailableError("No se pudo contactar el servicio de autenticación.") from exc
+
+    if response.status_code >= 500:
+        raise UnavailableError("El servicio de autenticación no está disponible.")
+    if response.status_code >= 400:
+        raise UnauthenticatedError(_auth_error_message(response))
+
+    try:
+        data = response.json()
+    except ValueError as exc:
+        raise UnavailableError("Respuesta de autenticación inválida.") from exc
+
+    return data
+
+
+async def verify_mfa(access_token: str, factor_id: str, code: str) -> SessionTokens:
+    """Verifica un código TOTP y devuelve nuevos tokens con aal2."""
+    base = settings.SUPABASE_URL.rstrip("/")
+    if not base or not settings.SUPABASE_PUBLISHABLE_KEY or not access_token:
+        raise UnavailableError("El servicio de autenticación no está configurado.")
+
+    headers = {
+        "apikey": settings.SUPABASE_PUBLISHABLE_KEY,
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+    }
+
+    # 1. Crear challenge
+    try:
+        async with httpx.AsyncClient(timeout=settings.SUPABASE_AUTH_TIMEOUT_SECONDS) as client:
+            challenge_resp = await client.post(
+                f"{base}/auth/v1/factors/{factor_id}/challenge",
+                headers=headers,
+            )
+    except httpx.HTTPError as exc:
+        raise UnavailableError("No se pudo contactar el servicio de autenticación.") from exc
+
+    if challenge_resp.status_code >= 400:
+        raise UnauthenticatedError(_auth_error_message(challenge_resp))
+
+    try:
+        challenge_data = challenge_resp.json()
+    except ValueError as exc:
+        raise UnavailableError("Respuesta de autenticación inválida.") from exc
+
+    challenge_id = challenge_data.get("id")
+    if not challenge_id:
+        raise UnavailableError("No se pudo crear el desafío MFA.")
+
+    # 2. Verificar código
+    try:
+        async with httpx.AsyncClient(timeout=settings.SUPABASE_AUTH_TIMEOUT_SECONDS) as client:
+            verify_resp = await client.post(
+                f"{base}/auth/v1/factors/{factor_id}/verify",
+                json={"challenge_id": challenge_id, "code": code},
+                headers=headers,
+            )
+    except httpx.HTTPError as exc:
+        raise UnavailableError("No se pudo contactar el servicio de autenticación.") from exc
+
+    if verify_resp.status_code >= 500:
+        raise UnavailableError("El servicio de autenticación no está disponible.")
+    if verify_resp.status_code >= 400:
+        raise UnauthenticatedError("Código MFA incorrecto.")
+
+    try:
+        data = verify_resp.json()
+    except ValueError as exc:
+        raise UnavailableError("Respuesta de autenticación inválida.") from exc
+
+    access_token_new = data.get("access_token")
+    if not access_token_new:
+        raise UnavailableError("La verificación MFA no devolvió una sesión válida.")
+
+    expires_in = data.get("expires_in")
+    try:
+        expires_in = int(expires_in) if expires_in is not None else 3600
+    except (TypeError, ValueError):
+        expires_in = 3600
+
+    return SessionTokens(
+        access_token=str(access_token_new),
+        refresh_token=data.get("refresh_token"),
+        expires_in=expires_in,
+    )
+
+
+async def list_mfa_factors(access_token: str) -> list[dict]:
+    """Lista los factores MFA inscritos del usuario."""
+    base = settings.SUPABASE_URL.rstrip("/")
+    if not base or not settings.SUPABASE_PUBLISHABLE_KEY or not access_token:
+        return []
+    headers = {
+        "apikey": settings.SUPABASE_PUBLISHABLE_KEY,
+        "Authorization": f"Bearer {access_token}",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=settings.SUPABASE_AUTH_TIMEOUT_SECONDS) as client:
+            response = await client.get(f"{base}/auth/v1/factors", headers=headers)
+    except httpx.HTTPError:
+        return []
+
+    if response.status_code >= 400:
+        return []
+
+    try:
+        data = response.json()
+    except ValueError:
+        return []
+
+    return data if isinstance(data, list) else data.get("factors", [])
+
+
+async def unenroll_mfa(access_token: str, factor_id: str) -> bool:
+    """Elimina un factor MFA inscrito."""
+    base = settings.SUPABASE_URL.rstrip("/")
+    if not base or not settings.SUPABASE_PUBLISHABLE_KEY or not access_token:
+        return False
+    headers = {
+        "apikey": settings.SUPABASE_PUBLISHABLE_KEY,
+        "Authorization": f"Bearer {access_token}",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=settings.SUPABASE_AUTH_TIMEOUT_SECONDS) as client:
+            response = await client.delete(f"{base}/auth/v1/factors/{factor_id}", headers=headers)
+    except httpx.HTTPError:
+        return False
+
+    return response.status_code < 400
+
+
+# ─── Password Recovery ─────────────────────────────────────────────────────────
+
+async def request_password_reset(email: str) -> None:
+    """Solicita un correo de recuperación de contraseña via Supabase Auth."""
+    base = settings.SUPABASE_URL.rstrip("/")
+    if not base or not settings.SUPABASE_PUBLISHABLE_KEY:
+        raise UnavailableError("El servicio de autenticación no está configurado.")
+    headers = {
+        "apikey": settings.SUPABASE_PUBLISHABLE_KEY,
+        "Content-Type": "application/json",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=settings.SUPABASE_AUTH_TIMEOUT_SECONDS) as client:
+            response = await client.post(
+                f"{base}/auth/v1/recover",
+                json={"email": email},
+                headers=headers,
+            )
+    except httpx.HTTPError as exc:
+        raise UnavailableError("No se pudo contactar el servicio de autenticación.") from exc
+
+    if response.status_code >= 500:
+        raise UnavailableError("El servicio de autenticación no está disponible.")
+    if response.status_code == 429:
+        raise RateLimitedError(300, "Demasiados intentos. Espera unos minutos.")
+
+
+async def update_password(access_token: str, new_password: str) -> None:
+    """Actualiza la contraseña del usuario con un token de recuperación."""
+    base = settings.SUPABASE_URL.rstrip("/")
+    if not base or not settings.SUPABASE_PUBLISHABLE_KEY or not access_token:
+        raise UnavailableError("El servicio de autenticación no está configurado.")
+    headers = {
+        "apikey": settings.SUPABASE_PUBLISHABLE_KEY,
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=settings.SUPABASE_AUTH_TIMEOUT_SECONDS) as client:
+            response = await client.put(
+                f"{base}/auth/v1/user",
+                json={"password": new_password},
+                headers=headers,
+            )
+    except httpx.HTTPError as exc:
+        raise UnavailableError("No se pudo contactar el servicio de autenticación.") from exc
+
+    if response.status_code >= 500:
+        raise UnavailableError("El servicio de autenticación no está disponible.")
+    if response.status_code >= 400:
+        raise UnauthenticatedError("No se pudo actualizar la contraseña. El enlace puede haber expirado.")

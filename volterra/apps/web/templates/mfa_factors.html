@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Factores MFA · VOLTERRA{% endblock %}
+
+{% block content %}
+<section class="auth-card" aria-labelledby="mfa-factors-title">
+  <h1 id="mfa-factors-title">Autenticación de dos factores</h1>
+
+  {% if factors %}
+  <ul class="stack">
+    {% for factor in factors %}
+    <li class="card">
+      <div class="row">
+        <span>{{ factor.friendly_name or factor.factor_type }}</span>
+        <span class="muted small">{{ factor.status }}</span>
+      </div>
+      <form method="post" action="/mfa/unenroll" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="factor_id" value="{{ factor.id }}">
+        <button type="submit" class="button button-danger small">Desactivar</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">No tienes factores MFA inscritos.</p>
+  {% endif %}
+
+  <p>
+    <a href="/mfa/enroll" class="button">Activar MFA</a>
+  </p>
+
+  <p class="muted small"><a href="/me">Volver</a></p>
+</section>
+{% endblock %}
