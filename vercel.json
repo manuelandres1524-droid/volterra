@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "volterra/api/index.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "volterra/api/index.py"
+    }
+  ],
+  "env": {
+    "APP_ENV": "prod",
+    "APP_NAME": "volterra-mvp",
+    "API_V1_PREFIX": "/api/v1",
+    "SUPABASE_URL": "https://tioeoswnhwrlbovkxocd.supabase.co",
+    "SUPABASE_JWT_ISSUER": "https://tioeoswnhwrlbovkxocd.supabase.co/auth/v1",
+    "SUPABASE_JWT_AUDIENCE": "authenticated",
+    "COOKIE_SECURE": "true",
+    "SECURE_HEADERS": "true",
+    "LOG_FORMAT": "json",
+    "LOG_LEVEL": "INFO",
+    "CORS_ORIGINS": "https://volterra-api.vercel.app",
+    "TRUSTED_HOSTS": "volterra-api.vercel.app,localhost,127.0.0.1",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_5BEqxGveyn-BfWynJe_f6w_bEcGUDCq"
+  }
+}
