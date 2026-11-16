@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ club.name }} · VOLTERRA{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb" aria-label="Migas de pan">
+  <a href="/clubs">Clubes</a> <span aria-hidden="true">/</span> <span>{{ club.name }}</span>
+</nav>
+
+<header class="page-header">
+  <div>
+    <h1>{{ club.name }}</h1>
+    <p class="muted">{{ club.city or "Ciudad no registrada" }} · {{ status_label(club.status) }}</p>
+  </div>
+  <a class="button button-secondary" href="/clubs/{{ club.id }}/members"
+     aria-label="Ver miembros de {{ club.name }}">Ver miembros</a>
+  {% if can_edit %}
+  <a class="button button-secondary" href="/clubs/{{ club.id }}/edit"
+     aria-label="Editar {{ club.name }}">Editar club</a>
+  {% endif %}
+</header>
+
+<section class="panel" aria-labelledby="club-data-title">
+  <h2 id="club-data-title">Datos del club</h2>
+  <dl class="data-list">
+    <dt>Identificador</dt>
+    <dd class="mono">{{ club.id }}</dd>
+    <dt>Ciudad</dt>
+    <dd>{{ club.city or "—" }}</dd>
+    <dt>País</dt>
+    <dd>{{ club.country }}</dd>
+    <dt>Estado</dt>
+    <dd>{{ status_label(club.status) }}</dd>
+    <dt>Fecha de alta</dt>
+    <dd>{{ club.created_at | fecha }}</dd>
+  </dl>
+</section>
+{% endblock %}

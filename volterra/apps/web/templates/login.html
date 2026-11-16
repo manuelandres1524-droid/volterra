@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Iniciar sesión · VOLTERRA{% endblock %}
+
+{% block content %}
+<section class="auth-card" aria-labelledby="login-title">
+  <h1 id="login-title">Iniciar sesión</h1>
+  <p class="muted">Acceso reservado a usuarios del club. No hay registro público.</p>
+
+  {% if error %}
+  <div class="alert alert-error" id="login-error" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" action="/login" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="next_url" value="{{ next_url }}">
+
+    <label for="email">Correo electrónico</label>
+    <input id="email" name="email" type="email" autocomplete="username"
+           inputmode="email" autocapitalize="none" spellcheck="false"
+           required autofocus value="{{ email or '' }}"
+           {% if error %}aria-invalid="true" aria-describedby="login-error"{% endif %}>
+
+    <label for="password">Contraseña</label>
+    <input id="password" name="password" type="password"
+           autocomplete="current-password" required
+           {% if error %}aria-invalid="true" aria-describedby="login-error"{% endif %}>
+
+    <button type="submit" class="button">Entrar</button>
+  </form>
+
+  <p class="muted small">
+    Si olvidaste tu contraseña, pide al administrador del club que la restablezca.
+  </p>
+</section>
+{% endblock %}

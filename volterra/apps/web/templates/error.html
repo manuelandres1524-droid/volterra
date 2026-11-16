@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · VOLTERRA{% endblock %}
+
+{% block content %}
+<section class="panel" aria-labelledby="error-title">
+  <h1 id="error-title">{{ title }}</h1>
+  <p>{{ message }}</p>
+  {% if auth %}
+  <p><a class="button button-secondary" href="/me">Volver a mi cuenta</a></p>
+  {% else %}
+  <p><a class="button button-secondary" href="/login">Ir a iniciar sesión</a></p>
+  {% endif %}
+</section>
+{% endblock %}

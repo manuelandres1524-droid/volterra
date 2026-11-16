@@ -1,0 +1,1 @@
+"""Paquete de funciones serverless para Vercel."""

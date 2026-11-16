@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Mi cuenta · VOLTERRA{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Mi cuenta</h1>
+    <p class="muted">Identidad y pertenencias activas.</p>
+  </div>
+  {% if auth.is_platform_admin %}
+  <span class="badge">Administrador de plataforma</span>
+  {% endif %}
+</header>
+
+<section class="panel" aria-labelledby="identity-title">
+  <h2 id="identity-title">Identidad</h2>
+  <dl class="data-list">
+    <dt>Nombre</dt>
+    <dd>{{ display_name or "Sin perfil registrado" }}</dd>
+    <dt>Correo</dt>
+    <dd>{{ auth.email or "No disponible" }}</dd>
+    <dt>Identificador</dt>
+    <dd class="mono">{{ auth.user_id }}</dd>
+  </dl>
+</section>
+
+<section class="panel" aria-labelledby="memberships-title">
+  <h2 id="memberships-title">Clubes y roles</h2>
+  {% if memberships %}
+  <div class="table-wrap" role="region" aria-label="Tabla de clubes y roles" tabindex="0">
+    <table>
+      <caption class="sr-only">Clubes y roles con pertenencia activa</caption>
+      <thead>
+        <tr>
+          <th scope="col">Club</th>
+          <th scope="col">Ciudad</th>
+          <th scope="col">Rol</th>
+          <th scope="col">Desde</th>
+          <th scope="col"><span class="sr-only">Acciones</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for membership in memberships %}
+        <tr>
+          <td>{{ membership.club_name }}</td>
+          <td>{{ membership.city or "—" }}</td>
+          <td>{{ role_label(membership.role) }}</td>
+          <td>{{ membership.started_at | fecha }}</td>
+          <td><a href="/clubs/{{ membership.club_id }}">Ver club</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty-state" role="status">No tienes pertenencias activas a ningún club.</p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{{ "Crear club" if mode == "new" else "Editar club" }} · VOLTERRA{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb" aria-label="Migas de pan">
+  <a href="/clubs">Clubes</a> <span aria-hidden="true">/</span>
+  {% if mode == "edit" %}
+  <a href="/clubs/{{ club.id }}">{{ club.name }}</a> <span aria-hidden="true">/</span>
+  {% endif %}
+  <span>{{ "Crear club" if mode == "new" else "Editar" }}</span>
+</nav>
+
+<header class="page-header">
+  <div>
+    <h1>{{ "Crear club" if mode == "new" else "Editar club" }}</h1>
+    <p class="muted">Solo el administrador de plataforma puede crear o editar clubes.</p>
+  </div>
+</header>
+
+<section class="panel">
+  {% if error %}
+  <div class="alert alert-error" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <form method="post"
+        action="{{ '/clubs' if mode == 'new' else '/clubs/' ~ club.id ~ '/edit' }}"
+        class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <label for="name">Nombre del club</label>
+    <input id="name" name="name" type="text" required maxlength="120"
+           autocomplete="organization"
+           value="{{ form.name or '' }}">
+
+    <label for="city">Ciudad</label>
+    <input id="city" name="city" type="text" maxlength="120"
+           autocomplete="address-level2"
+           value="{{ form.city or '' }}">
+
+    <label for="country">País (dos letras)</label>
+    <input id="country" name="country" type="text" required minlength="2" maxlength="2"
+           aria-describedby="country-hint" autocomplete="country"
+           autocapitalize="characters" spellcheck="false"
+           value="{{ form.country or 'CO' }}">
+    <p class="muted small" id="country-hint">Código ISO de dos letras, por ejemplo CO.</p>
+
+    {% if mode == "edit" %}
+    <label for="club_status">Estado</label>
+    <select id="club_status" name="club_status">
+      {% for value, label in [("active", "Activo"), ("suspended", "Suspendido"), ("closed", "Cerrado")] %}
+      <option value="{{ value }}" {% if form.status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    {% endif %}
+
+    <div class="stack">
+      <button type="submit" class="button">
+        {{ "Crear club" if mode == "new" else "Guardar cambios" }}
+      </button>
+      <a class="button button-secondary"
+         href="{{ '/clubs' if mode == 'new' else '/clubs/' ~ club.id }}">Cancelar</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

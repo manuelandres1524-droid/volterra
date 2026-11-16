@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Miembros de {{ club.name }} · VOLTERRA{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb" aria-label="Migas de pan">
+  <a href="/clubs">Clubes</a> <span aria-hidden="true">/</span>
+  <a href="/clubs/{{ club.id }}">{{ club.name }}</a> <span aria-hidden="true">/</span>
+  <span>Miembros</span>
+</nav>
+
+<header class="page-header">
+  <div>
+    <h1>Miembros activos</h1>
+    <p class="muted">{{ club.name }}</p>
+  </div>
+  <button type="button" class="button button-secondary"
+          hx-get="/clubs/{{ club.id }}/members"
+          hx-target="#members-panel"
+          hx-select="#members-panel"
+          hx-swap="outerHTML"
+          aria-controls="members-panel">
+    Actualizar lista
+  </button>
+</header>
+
+{% if error %}
+<div class="alert alert-error" role="alert">{{ error }}</div>
+{% endif %}
+
+<section id="members-panel" class="panel" aria-labelledby="members-title">
+  <h2 id="members-title">Pertenencia vigente</h2>
+
+  {% if members %}
+  <div class="table-wrap" role="region" aria-label="Tabla de miembros activos" tabindex="0">
+    <table>
+      <caption class="sr-only">Miembros activos de {{ club.name }}</caption>
+      <thead>
+        <tr>
+          <th scope="col">Miembro</th>
+          <th scope="col">Rol</th>
+          <th scope="col">Desde</th>
+          {% if can_manage %}
+          <th scope="col">Acciones</th>
+          {% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for member in members %}
+        {% set member_name = member.display_name or "Miembro del club" %}
+        <tr>
+          <td>{{ member_name }}</td>
+          <td>{{ role_label(member.role) }}</td>
+          <td>{{ member.started_at | fecha }}</td>
+          {% if can_manage %}
+          <td>
+            {% set role_options = assignable_roles | reject("equalto", member.role) | list %}
+            {% if member.role in manageable_roles %}
+            {% if role_options %}
+            <form method="post"
+                  action="/clubs/{{ club.id }}/members/{{ member.id }}/role"
+                  class="stack">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <label class="sr-only" for="role-{{ member.id }}">Nuevo rol para {{ member_name }}</label>
+              <select id="role-{{ member.id }}" name="role" required>
+                {% for role in role_options %}
+                <option value="{{ role }}">{{ role_label(role) }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="button button-secondary"
+                      aria-label="Cambiar rol de {{ member_name }}">Cambiar rol</button>
+            </form>
+            {% endif %}
+
+            <form method="post"
+                  action="/clubs/{{ club.id }}/members/{{ member.id }}/end"
+                  class="stack"
+                  data-confirm="¿Cerrar la pertenencia de {{ member_name }}? La persona perderá el acceso al club."
+                  data-confirm-action="Cerrar pertenencia">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button type="submit" class="button button-secondary"
+                      aria-label="Cerrar la pertenencia de {{ member_name }}">Cerrar pertenencia</button>
+            </form>
+            {% else %}
+            <span class="muted small">Sin acciones para tu rol</span>
+            {% endif %}
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty-state" role="status">No hay miembros visibles para tu rol.</p>
+  {% endif %}
+
+  <p class="muted small">
+    La lista muestra únicamente las filas que tus permisos permiten leer. Un entrenador
+    no ve los perfiles de sus compañeros.
+  </p>
+</section>
+
+{% if can_manage %}
+<section class="panel" aria-labelledby="add-member-title">
+  <h2 id="add-member-title">Añadir miembro</h2>
+  <p class="muted small" id="user-id-hint">
+    Pega el identificador (UUID) de un usuario ya registrado. La base de datos comprueba
+    que existe y que puedes asignarle ese rol.
+  </p>
+
+  <form method="post" action="/clubs/{{ club.id }}/members" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <label for="user_id">Identificador del usuario</label>
+    <input id="user_id" name="user_id" type="text" required
+           aria-describedby="user-id-hint" autocomplete="off"
+           autocapitalize="none" spellcheck="false"
+           placeholder="00000000-0000-4000-8000-000000000000">
+
+    <label for="new-role">Rol</label>
+    <select id="new-role" name="role" required>
+      {% for role in assignable_roles %}
+      <option value="{{ role }}">{{ role_label(role) }}</option>
+      {% endfor %}
+    </select>
+
+    <button type="submit" class="button">Añadir miembro</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

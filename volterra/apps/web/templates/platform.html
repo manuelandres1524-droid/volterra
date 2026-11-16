@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Plataforma · VOLTERRA{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Plataforma</h1>
+    <p class="muted">Resumen mínimo reservado a administradores de plataforma.</p>
+  </div>
+  <span class="badge">platform_admin</span>
+</header>
+
+<section class="panel" aria-labelledby="platform-title">
+  <h2 id="platform-title">Estado del acceso</h2>
+  <dl class="data-list">
+    <dt>Actor</dt>
+    <dd class="mono">{{ auth.user_id }}</dd>
+    <dt>Comprobación</dt>
+    <dd>La RPC <code>fn_is_platform_admin()</code> confirmó el acceso.</dd>
+  </dl>
+  <p class="muted small">
+    Este panel no lee la tabla <code>platform_admins</code>: la pertenencia se verifica
+    mediante la RPC y la tabla sigue cerrada a PostgREST.
+  </p>
+</section>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Clubes · VOLTERRA{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Clubes</h1>
+    <p class="muted">Clubes donde tienes una pertenencia activa.</p>
+  </div>
+  {% if auth.is_platform_admin %}
+  <a class="button" href="/clubs/new">Crear club</a>
+  {% endif %}
+</header>
+
+{% if memberships %}
+<ul class="card-list" aria-label="Clubes con pertenencia activa">
+  {% for membership in memberships %}
+  <li class="card">
+    <div>
+      <h2><a href="/clubs/{{ membership.club_id }}">{{ membership.club_name }}</a></h2>
+      <p class="muted">
+        {{ membership.city or "Ciudad no registrada" }} ·
+        {{ role_label(membership.role) }} ·
+        {{ status_label(membership.status) }}
+      </p>
+    </div>
+    <a class="button button-secondary" href="/clubs/{{ membership.club_id }}"
+       aria-label="Abrir {{ membership.club_name }}">Abrir</a>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<section class="panel">
+  <p class="empty-state" role="status">No tienes clubes activos. Un administrador debe asignarte una pertenencia.</p>
+</section>
+{% endif %}
+{% endblock %}
