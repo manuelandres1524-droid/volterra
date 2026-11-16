@@ -24,7 +24,7 @@
     "LOG_FORMAT": "json",
     "LOG_LEVEL": "INFO",
     "CORS_ORIGINS": "https://volterra-api.vercel.app",
-    "TRUSTED_HOSTS": "volterra-api.vercel.app,localhost,127.0.0.1",
+    "TRUSTED_HOSTS": "*.vercel.app,localhost,127.0.0.1",
     "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_5BEqxGveyn-BfWynJe_f6w_bEcGUDCq"
   }
 }
