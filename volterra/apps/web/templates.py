@@ -29,6 +29,17 @@ STATUS_LABELS = {
     "closed": "Cerrado",
 }
 
+GENDER_LABELS = {
+    "male": "Hombre",
+    "female": "Mujer",
+    "unspecified": "Sin especificar",
+}
+
+ATHLETE_STATUS_LABELS = {
+    "active": "Activo",
+    "inactive": "Inactivo",
+}
+
 
 def _fecha(value: Any) -> str:
     if not value:
@@ -54,9 +65,19 @@ def _status_label(value: str | None) -> str:
     return STATUS_LABELS.get(value or "", value or "Sin estado")
 
 
+def _gender_label(value: str | None) -> str:
+    return GENDER_LABELS.get(value or "", value or "Sin especificar")
+
+
+def _athlete_status_label(value: str | None) -> str:
+    return ATHLETE_STATUS_LABELS.get(value or "", value or "Sin estado")
+
+
 templates.env.filters["fecha"] = _fecha
 templates.env.globals["role_label"] = _role_label
 templates.env.globals["status_label"] = _status_label
+templates.env.globals["gender_label"] = _gender_label
+templates.env.globals["athlete_status_label"] = _athlete_status_label
 
 
 def render(

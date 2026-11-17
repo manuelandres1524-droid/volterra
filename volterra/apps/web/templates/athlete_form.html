@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}{{ "Registrar atleta" if mode == "new" else "Editar atleta" }} · VOLTERRA{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb" aria-label="Migas de pan">
+  <a href="/clubs">Clubes</a> <span aria-hidden="true">/</span>
+  <a href="/clubs/{{ club.id }}">{{ club.name }}</a> <span aria-hidden="true">/</span>
+  <a href="/clubs/{{ club.id }}/athletes">Atletas</a> <span aria-hidden="true">/</span>
+  <span>{{ "Registrar" if mode == "new" else "Editar" }}</span>
+</nav>
+
+<header class="page-header">
+  <div>
+    <h1>{{ "Registrar atleta" if mode == "new" else "Editar atleta" }}</h1>
+    <p class="muted">{{ club.name }}</p>
+  </div>
+</header>
+
+{% if error %}
+<div class="alert alert-error" role="alert">{{ error }}</div>
+{% endif %}
+
+<form method="post" class="panel stack"
+      action="/clubs/{{ club.id }}/athletes{% if mode == 'edit' %}/{{ athlete.id }}/edit{% endif %}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+  <label for="display_name">Nombre</label>
+  <input id="display_name" name="display_name" type="text" required minlength="2" maxlength="120"
+         autocomplete="name" value="{{ form.display_name or '' }}">
+
+  {% if mode == "new" %}
+  <label for="birth_date">Fecha de nacimiento (mayor de edad)</label>
+  <input id="birth_date" name="birth_date" type="date" required
+         min="1910-01-01"
+         max="{{ form.birth_date_max }}"
+         value="{{ form.birth_date or '' }}"
+         aria-describedby="birth-date-hint">
+  <p class="muted small" id="birth-date-hint">
+    Solo se registran deportistas mayores de edad. Sin este dato no se puede crear la ficha.
+  </p>
+  {% else %}
+  <dl class="data-list">
+    <dt>Fecha de nacimiento</dt>
+    <dd>{{ form.birth_date | fecha }}</dd>
+  </dl>
+  {% endif %}
+
+  <label for="position">Posición</label>
+  <input id="position" name="position" type="text" maxlength="30"
+         value="{{ form.position or '' }}" autocomplete="off">
+
+  <label for="gender">Género</label>
+  <select id="gender" name="gender">
+    <option value="unspecified" {% if (form.gender or "unspecified") == "unspecified" %}selected{% endif %}>Sin especificar</option>
+    <option value="male" {% if form.gender == "male" %}selected{% endif %}>Hombre</option>
+    <option value="female" {% if form.gender == "female" %}selected{% endif %}>Mujer</option>
+  </select>
+
+  <label for="category">Categoría</label>
+  <input id="category" name="category" type="text" maxlength="30"
+         value="{{ form.category or '' }}" autocomplete="off">
+
+  <div class="cluster">
+    <button type="submit" class="button">
+      {{ "Registrar atleta" if mode == "new" else "Guardar cambios" }}
+    </button>
+    <a class="button button-secondary" href="/clubs/{{ club.id }}/athletes">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

@@ -83,3 +83,37 @@ class MembersView:
             "assignable_roles": self.assignable_roles,
             "manageable_roles": self.assignable_roles,
         }
+
+
+@dataclass(frozen=True)
+class AthletesView:
+    club: dict
+    athletes: list[dict]
+    can_manage: bool
+    error: str | None = None
+
+    def context(self) -> dict[str, Any]:
+        return {
+            "club": self.club,
+            "athletes": self.athletes,
+            "can_manage": self.can_manage,
+            "error": self.error,
+        }
+
+
+@dataclass(frozen=True)
+class AthleteFormView:
+    mode: str
+    club: dict
+    athlete: dict | None
+    form: dict
+    error: str | None = None
+
+    def context(self) -> dict[str, Any]:
+        return {
+            "mode": self.mode,
+            "club": self.club,
+            "athlete": self.athlete,
+            "form": self.form,
+            "error": self.error,
+        }

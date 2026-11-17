@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter
 
-from apps.api.v1.endpoints import clubs, health, me, platform
+from apps.api.v1.endpoints import athletes, clubs, health, me, platform
 from apps.api.v1.schemas import ErrorOut, ValidationErrorOut
 
 # Respuestas de error documentadas en OpenAPI. Se declaran una vez para que el
@@ -30,4 +30,7 @@ api_router.include_router(
 )
 api_router.include_router(
     platform.router, prefix="/platform", tags=["platform"], responses=COMMON_RESPONSES
+)
+api_router.include_router(
+    athletes.router, prefix="/clubs", tags=["athletes"], responses=COMMON_RESPONSES
 )

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Atletas de {{ club.name }} · VOLTERRA{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb" aria-label="Migas de pan">
+  <a href="/clubs">Clubes</a> <span aria-hidden="true">/</span>
+  <a href="/clubs/{{ club.id }}">{{ club.name }}</a> <span aria-hidden="true">/</span>
+  <span>Atletas</span>
+</nav>
+
+<header class="page-header">
+  <div>
+    <h1>Atletas</h1>
+    <p class="muted">{{ club.name }}</p>
+  </div>
+  {% if can_manage %}
+  <a class="button button-secondary" href="/clubs/{{ club.id }}/athletes/new"
+     aria-label="Registrar un atleta en {{ club.name }}">Registrar atleta</a>
+  {% endif %}
+</header>
+
+{% if error %}
+<div class="alert alert-error" role="alert">{{ error }}</div>
+{% endif %}
+
+<section id="athletes-panel" class="panel" aria-labelledby="athletes-title">
+  <h2 id="athletes-title">Fichas activas</h2>
+
+  {% if athletes %}
+  <div class="table-wrap" role="region" aria-label="Tabla de atletas de {{ club.name }}" tabindex="0">
+    <table>
+      <caption class="sr-only">Atletas de {{ club.name }}</caption>
+      <thead>
+        <tr>
+          <th scope="col">Nombre</th>
+          <th scope="col">Posición</th>
+          <th scope="col">Nacimiento</th>
+          <th scope="col">Género</th>
+          <th scope="col">Categoría</th>
+          {% if can_manage %}<th scope="col">Acciones</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for athlete in athletes %}
+        <tr>
+          <td>{{ athlete.display_name }}</td>
+          <td>{{ athlete.position or "—" }}</td>
+          <td>{{ athlete.birth_date | fecha }}</td>
+          <td>{{ gender_label(athlete.gender) }}</td>
+          <td>{{ athlete.category or "—" }}</td>
+          {% if can_manage %}
+          <td>
+            <a class="button button-secondary" href="/clubs/{{ club.id }}/athletes/{{ athlete.id }}/edit">Editar</a>
+            <form method="post" action="/clubs/{{ club.id }}/athletes/{{ athlete.id }}/deactivate"
+                  class="inline-form"
+                  data-confirm="¿Desactivar a {{ athlete.display_name }}? La ficha pasará a inactiva."
+                  data-confirm-action="Desactivar">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button type="submit" class="button button-secondary"
+                      aria-label="Desactivar a {{ athlete.display_name }}">Desactivar</button>
+            </form>
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty-state" role="status">No hay atletas registrados en este club todavía.</p>
+  {% endif %}
+</section>
+
+<p class="muted small">
+  Datos de identidad de deportistas mayores de edad. Su tratamiento exige
+  autorización del titular (art. 9 de la Ley 1581 de 2012).
+</p>
+{% endblock %}

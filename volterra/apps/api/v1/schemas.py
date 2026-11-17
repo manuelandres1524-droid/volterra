@@ -98,3 +98,23 @@ class PlatformOverviewOut(BaseModel):
 
 class HealthOut(BaseModel):
     status: str
+
+
+class AthleteOut(BaseModel):
+    id: str
+    club_id: str
+    display_name: str
+    position: str | None = None
+    birth_date: str | None = None
+    gender: str = "unspecified"
+    category: str | None = None
+    status: str = "active"
+    created_at: str | None = None
+
+
+class AthletesOut(BaseModel):
+    club_id: str
+    athletes: list[AthleteOut] = Field(default_factory=list)
+    status: str | None = "active"
+    limit: int | None = None
+    offset: int = 0
