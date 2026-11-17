@@ -11,16 +11,26 @@ from typing import Any
 
 from supabase import Client
 
+from apps.core import circuit_breaker
 from apps.services.postgrest_errors import translate_postgrest_error
 
 
 def _execute(builder: Any) -> Any:
+    breaker = circuit_breaker.supabase_breaker
+    breaker.before_request()
     try:
-        return builder.execute()
+        response = builder.execute()
     except Exception as exc:  # supabase-py propaga errores de red/PostgREST
+        # Con .code la base respondió: se considera servicio sano (éxito).
+        if getattr(exc, "code", None):
+            breaker.record_success()
+        else:
+            breaker.record_failure()
         raise translate_postgrest_error(
             exc, unavailable_message="No se pudo consultar la base de datos"
         ) from exc
+    breaker.record_success()
+    return response
 
 
 def _rows(response: Any) -> list[dict]:

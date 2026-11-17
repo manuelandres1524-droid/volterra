@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from apps.api.v1.router import api_router
@@ -312,7 +313,9 @@ def create_app() -> FastAPI:
     application.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
     # El último middleware registrado es el más externo. Orden efectivo:
-    # TrustedHost -> logging -> cabeceras -> límite -> aplicación.
+    # TrustedHost -> GZip -> logging -> cabeceras -> límite -> aplicación.
+    # GZip comprime respuestas de más de 1024 bytes (gzip únicamente).
+    application.add_middleware(GZipMiddleware, minimum_size=1024)
     application.middleware("http")(rate_limit_middleware)
     application.middleware("http")(add_security_headers)
     application.middleware("http")(request_logging_middleware)

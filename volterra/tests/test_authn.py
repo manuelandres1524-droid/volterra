@@ -29,6 +29,13 @@ def test_security_headers_present():
     assert r.headers["referrer-policy"] == "no-referrer"
 
 
+def test_responses_large_enough_are_gzip_compressed():
+    r = client.get("/login", headers={"Accept-Encoding": "gzip"})
+
+    assert r.status_code == 200
+    assert r.headers.get("content-encoding") == "gzip"
+
+
 def test_api_responses_are_not_cached():
     r = client.get("/api/v1/me/")
 

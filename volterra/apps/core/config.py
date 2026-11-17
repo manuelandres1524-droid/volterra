@@ -65,6 +65,12 @@ class Settings(BaseSettings):
     SUPABASE_PUBLISHABLE_KEY: str = ""
     SUPABASE_AUTH_TIMEOUT_SECONDS: float = 10.0
     SUPABASE_POSTGREST_TIMEOUT_SECONDS: float = Field(default=15.0, gt=0)
+    # Circuit breaker por proceso para llamadas a Supabase. Solo los fallos de
+    # transporte (sin .code: red/timeout) abren el circuito; los errores de
+    # dominio (la base respondió) se consideran un éxito. Ver circuit_breaker.py.
+    CIRCUIT_BREAKER_ENABLED: bool = True
+    CIRCUIT_BREAKER_FAILURE_THRESHOLD: int = Field(default=5, gt=0)
+    CIRCUIT_BREAKER_RECOVERY_SECONDS: float = Field(default=30.0, ge=0)
 
     # Sesión del frontend Jinja2. Las cookies de token son HttpOnly; la de CSRF
     # debe ser legible por el navegador para el patrón double-submit.

@@ -12,16 +12,25 @@ from typing import Any
 
 from supabase import Client
 
+from apps.core import circuit_breaker
 from apps.services.postgrest_errors import translate_postgrest_error
 
 
 def _rpc(client: Client, name: str, params: dict[str, Any]) -> Any:
+    breaker = circuit_breaker.supabase_breaker
+    breaker.before_request()
     try:
         response = client.rpc(name, params).execute()
     except Exception as exc:  # postgrest.exceptions.APIError y errores de red
+        # Con .code la base respondió: se considera servicio sano (éxito).
+        if getattr(exc, "code", None):
+            breaker.record_success()
+        else:
+            breaker.record_failure()
         raise translate_postgrest_error(
             exc, unavailable_message="No se pudo completar la operación"
         ) from exc
+    breaker.record_success()
     return getattr(response, "data", None)
 
 
